@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import logging
+import os
 import sqlite3
 from typing import Any
 
@@ -188,7 +189,7 @@ def get_meal_by_id(meal_id: int) -> Meal:
         Meal: The Meal object corresponding to the meal_id.
 
     Raises:
-        ValueError: If the meal is not found or is marked as deleted.
+        ValueError: If the meal with the id is not found or is marked as deleted.
         sqlite3.Error: If any database error occurs.
     """
     try:
