@@ -17,7 +17,7 @@ def mock_update_meal_stats(mocker):
 """Fixtures providing sample meals for the tests."""
 @pytest.fixture
 def sample_meal1():
-    return Meal(1, 'Meal 1', 'Cuisine 1', 1.00, 'EASY')
+    return Meal(1, 'Meal 1', 'Cuisine 1', 1.00, 'LOW')
 
 @pytest.fixture
 def sample_meal2():
@@ -40,11 +40,11 @@ def test_prep_combatants(battle_model, sample_battle):
     assert len(battle_model.combatants) == 2
 
 
-def test_add_more_combatants_to_filled_list(battle_model, sample_meal1):
+def test_add_more_combatants_to_filled_list(battle_model, sample_battle):
     """Test error when adding additional meals to a filled up combatants list """
-    battle_model.prep_combatant(sample_meal1)
+    battle_model.combatants.extend(sample_battle)
     with pytest.raises(ValueError, match="Combatant list is full, cannot add more combatants."):
-        battle_model.prep_combatant(sample_meal1)
+        battle_model.prep_combatant(sample_battle[0])
 
 ##################################################
 # Clear Battle Management Test Cases
@@ -57,7 +57,7 @@ def test_clear_combatants(battle_model, sample_battle):
     battle_model.prep_combatant(smple_meal2)
 
     battle_model.clear_combatants()
-    assert len(battle_model.combatandts) == 0, "Playlist should be empty after clearing"
+    assert len(battle_model.combatants) == 0, "Playlist should be empty after clearing"
 
 
 
@@ -69,7 +69,7 @@ def test_get_battle_score(battle_model, sample_meal1):
     """Test successfully retrieves the score of a meal object."""
 
     retrieved_score = battle_model.get_battle_score(sample_meal1)
-    assert retrieved_score.id == (sample_meal1.price * len(sample_meal1.cuisine)) - 2
+    assert retrieved_score== (sample_meal1.price * len(sample_meal1.cuisine)) - 3
 
 
 def test_get_combatants(battle_model, sample_battle):
@@ -86,19 +86,23 @@ def test_get_combatants(battle_model, sample_battle):
 # Battle Test Cases
 ##################################################
 
-def test_battle(battle_model, sample_battle, mock_update_meal_stats):
+def test_battle(battle_model, sample_battle, caplog, mocker):
     """Test battle"""
-    battle_model.combatants.extend(sample_battle)
 
+    # mocker.patch("meal_max.models.battle_model.get_battle_score", side_effect=[85.5, 102.0])
+    mocker.patch("meal_max.models.battle_model.get_random", return_value=0.42)
+    mocker_update_stats = mocker.patch("meal_max.models.kitchen_model.update_meal_stats")
+
+    battle_model.combatants.extend(sample_battle)
     winner = battle_model.battle()
 
     # Assert that combatants has been updated to 1
     assert len(battle_model.combatants) == 1, f"A combatant needs to be removed, since there can only be one winner"
 
     # Check that all combatants meal stats were updated
-    mock_update_meal_stats.assert_any_call(1)
-    mock_update_meal_stats.assert_any_call(2)
-    assert mock_update_meal_stats.call_count == len(battle_model.playlist)
+    mocker_update_stats.assert_any_call(1)
+    mocker_update_stats.assert_any_call(2)
+    assert mocker_update_stats.call_count == len(battle_model.playlist)
 
     #Check that the winner remains in the combatant list
     assert winner in battle_model.combatants
@@ -107,13 +111,11 @@ def test_battle_insufficient_combatants(battle_model, sample_meal1):
     """Test battle with insufficient combatants"""
 
     """No Combatants"""
-    battle_model.battle()
     with pytest.raises(ValueError, match="Two combatants must be prepped for a battle."):
         battle_model.battle()      
 
     
     """Only 1 Combatant"""
     battle_model.prep_combatant(sample_meal1)
-    battle_model.battle()
     with pytest.raises(ValueError, match="Two combatants must be prepped for a battle."):
         battle_model.battle() 
