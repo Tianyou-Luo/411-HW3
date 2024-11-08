@@ -268,29 +268,23 @@ def test_update_meal_stats_deleted_song(mock_cursor):
     mock_cursor.execute.assert_called_once_with("SELECT deleted FROM meals WHERE id = ?", (1,))
 
 def test_get_leaderboard(mock_cursor):
-    # Simulate that there are multiple meals in the database
+    # Define mock data returned by fetchall
     mock_cursor.fetchall.return_value = [
-        (1, "Meal A", "Cuisine A", 1.1, "LOW", 0, 0, 0.0),      # Added win_pct = 0.0
-        (2, "Meal B", "Cuisine B", 1.1, "MED", 1, 1, 100.0),    # Added win_pct = 100.0
-        (3, "Meal C", "Cuisine C", 1.1, "HIGH", 2, 1, 50.0) 
+        (1, "Meal A", "Cuisine A", 10.0, "Medium", 5, 3, 0.6),
+        (2, "Meal B", "Cuisine B", 12.0, "High", 10, 5, 0.5),
+        (3, "Meal C", "Cuisine C", 8.0, "Low", 8, 4, 0.5)
     ]
-    
-    # Call the get_leaderboard function with a sample sorted_by ("wins")
-    sorted_by =  "wins"
-    result = get_leaderboard(sorted_by)
-    
-    # Expected result based on the simulated fetchone return value
+
+    # Expected result
     expected_result = [
-        {'id': 2, 'meal': "Meal B", 'cuisine': "Cuisine B", 'price': 1.1, 'difficulty': "MED", 'battles': 1, 'wins': 1, 'win_pct': 100.0},
-        {'id': 3, 'meal': "Meal C", 'cuisine': "Cuisine C", 'price': 1.1, 'difficulty': "HIGH", 'battles': 2, 'wins': 1, 'win_pct': 50.0},
-        {'id': 1, 'meal': "Meal A", 'cuisine': "Cuisine A", 'price': 1.1, 'difficulty': "LOW", 'battles': 0, 'wins': 0, 'win_pct': 0.0}
+        {'id': 1, 'meal': "Meal A", 'cuisine': "Cuisine A", 'price': 10.0, 'difficulty': "Medium", 'battles': 5, 'wins': 3, 'win_pct': 60.0},
+        {'id': 2, 'meal': "Meal B", 'cuisine': "Cuisine B", 'price': 12.0, 'difficulty': "High", 'battles': 10, 'wins': 5, 'win_pct': 50.0},
+        {'id': 3, 'meal': "Meal C", 'cuisine': "Cuisine C", 'price': 8.0, 'difficulty': "Low", 'battles': 8, 'wins': 4, 'win_pct': 50.0}
     ]
-    print(result)
-    
 
-    # Ensure the result matches the expected output
+    result = get_leaderboard("wins")
     assert result == expected_result, f"Expected {expected_result}, got {result}"
-
+    
     # Ensure the SQL query was executed correctly
     expected_query = normalize_whitespace("SELECT id, meal, cuisine, price, difficulty, battles, wins, (wins * 1.0 / battles) AS win_pct FROM meals WHERE deleted = false AND battles > 0 ORDER BY wins DESC")
     actual_query = normalize_whitespace(mock_cursor.execute.call_args[0][0])
