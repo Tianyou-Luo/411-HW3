@@ -254,7 +254,7 @@ def test_update_meal_stats(mock_cursor):
     assert actual_arguments == expected_arguments, f"The SQL query arguments did not match. Expected {expected_arguments}, got {actual_arguments}."
 
 ### Test for Updating a Deleted Meal:
-def test_update_meal_stats_deleted_song(mock_cursor):
+def test_update_meal_stats_deleted_meal(mock_cursor):
     """Test error when trying to update meal stats for a deleted meal."""
 
     # Simulate that the meal exists but is marked as deleted (id = 1)
